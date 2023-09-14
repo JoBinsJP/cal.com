@@ -32,14 +32,16 @@ import { GoogleWorkspaceInviteButton } from "./GoogleWorkspaceInviteButton";
 
 type MemberInvitationModalProps = {
   isOpen: boolean;
+  justEmailInvites?: boolean;
   onExit: () => void;
   orgMembers?: RouterOutputs["viewer"]["organizations"]["getMembers"];
   onSubmit: (values: NewMemberForm, resetFields: () => void) => void;
   onSettingsOpen?: () => void;
   teamId: number;
-  members: PendingMember[];
+  members?: PendingMember[];
   token?: string;
   isLoading?: boolean;
+  disableCopyLink?: boolean;
 };
 
 type MembershipRoleOption = {
@@ -66,6 +68,7 @@ function toggleElementInArray(value: string[] | string | undefined, element: str
 
 export default function MemberInvitationModal(props: MemberInvitationModalProps) {
   const { t } = useLocale();
+  const { disableCopyLink = false } = props;
   const trpcContext = trpc.useContext();
 
   const [modalImportMode, setModalInputMode] = useState<ModalMode>(
@@ -119,9 +122,10 @@ export default function MemberInvitationModal(props: MemberInvitationModalProps)
   const newMemberFormMethods = useForm<NewMemberForm>();
 
   const validateUniqueInvite = (value: string) => {
+    if (!props?.members?.length) return true;
     return !(
-      props.members.some((member) => member?.username === value) ||
-      props.members.some((member) => member?.email === value)
+      props?.members.some((member) => member?.username === value) ||
+      props?.members.some((member) => member?.email === value)
     );
   };
 
@@ -203,7 +207,7 @@ export default function MemberInvitationModal(props: MemberInvitationModalProps)
                 render={({ field: { onChange }, fieldState: { error } }) => (
                   <>
                     <TextField
-                      label={t("email_or_username")}
+                      label={props.justEmailInvites ? t("email") : t("email_or_username")}
                       id="inviteUser"
                       name="inviteUser"
                       placeholder="email@example.com"
@@ -229,7 +233,7 @@ export default function MemberInvitationModal(props: MemberInvitationModalProps)
                       {/* TODO: Make this a fancy email input that styles on a successful email. */}
                       <TextAreaField
                         name="emails"
-                        label="Invite via email"
+                        label={t("invite_via_email")}
                         rows={4}
                         autoCorrect="off"
                         placeholder="john@doe.com, alex@smith.com"
@@ -265,7 +269,7 @@ export default function MemberInvitationModal(props: MemberInvitationModalProps)
                   }}
                   StartIcon={PaperclipIcon}
                   className="mt-3 justify-center stroke-2">
-                  Upload a .csv file
+                  {t("upload_csv_file")}
                 </Button>
                 <input
                   ref={importRef}
@@ -351,23 +355,24 @@ export default function MemberInvitationModal(props: MemberInvitationModalProps)
             )}
           </div>
           <DialogFooter showDivider>
-            <div className="relative right-40">
-              <Button
-                type="button"
-                color="minimal"
-                variant="icon"
-                onClick={() =>
-                  props.token
-                    ? copyInviteLinkToClipboard(props.token)
-                    : createInviteMutation.mutate({ teamId: props.teamId })
-                }
-                className={classNames("gap-2", props.token && "opacity-50")}
-                data-testid="copy-invite-link-button">
-                <Link className="text-default h-4 w-4" aria-hidden="true" />
-                {t("copy_invite_link")}
-              </Button>
-            </div>
-
+            {!disableCopyLink && (
+              <div className="flex-grow">
+                <Button
+                  type="button"
+                  color="minimal"
+                  variant="icon"
+                  onClick={() =>
+                    props.token
+                      ? copyInviteLinkToClipboard(props.token)
+                      : createInviteMutation.mutate({ teamId: props.teamId })
+                  }
+                  className={classNames("gap-2", props.token && "opacity-50")}
+                  data-testid="copy-invite-link-button">
+                  <Link className="text-default h-4 w-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">{t("copy_invite_link")}</span>
+                </Button>
+              </div>
+            )}
             <Button
               type="button"
               color="minimal"

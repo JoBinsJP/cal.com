@@ -1,5 +1,7 @@
 export { Avatar, AvatarGroup } from "./components/avatar";
 export type { AvatarProps, AvatarGroupProps } from "./components/avatar";
+export { ArrowButton } from "./components/arrow-button";
+export type { ArrowButtonProps } from "./components/arrow-button";
 export { Badge, UpgradeTeamsBadge } from "./components/badge";
 export type { BadgeProps } from "./components/badge";
 export { Breadcrumb, BreadcrumbContainer, BreadcrumbItem } from "./components/breadcrumb";
@@ -67,6 +69,7 @@ export {
   SkeletonLoader,
   Slider,
   PopularAppsSlider,
+  RecentAppsSlider,
   useShouldShowArrows,
   AppStoreCategories,
 } from "./components/apps";
@@ -83,6 +86,7 @@ export type { AlertProps } from "./components/alert";
 export { Credits } from "./components/credits";
 export { Divider, VerticalDivider } from "./components/divider";
 export { EmptyScreen } from "./components/empty-screen";
+export { UnpublishedEntity } from "./components/unpublished-entity";
 export { List, ListItem, ListItemText, ListItemTitle, ListLinkItem } from "./components/list";
 export type { ListItemProps, ListProps } from "./components/list";
 export { HeadSeo } from "./components/head-seo";
@@ -137,3 +141,26 @@ export { useCalcomTheme } from "./styles/useCalcomTheme";
 export { ScrollableArea } from "./components/scrollable/ScrollableArea";
 export { WizardLayout } from "./layouts/WizardLayout";
 export { DataTable } from "./components/data-table";
+export {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "./components/sheet/sheet";
+export {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+  CommandInput,
+  CommandSeparator,
+  CommandShortcut,
+} from "./components/command";
+
+export { Popover, PopoverContent, PopoverTrigger } from "./components/popover";

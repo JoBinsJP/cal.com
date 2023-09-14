@@ -1,7 +1,6 @@
 import type { Prisma, Credential } from "@prisma/client";
 
 import { DailyLocationType } from "@calcom/app-store/locations";
-import { getBookingFieldsWithSystemFields } from "@calcom/features/bookings/lib/getBookingFields";
 import slugify from "@calcom/lib/slugify";
 import { PeriodType, SchedulingType } from "@calcom/prisma/enums";
 import type { userSelect } from "@calcom/prisma/selects";
@@ -80,12 +79,14 @@ const commons = {
   schedulingType: SchedulingType.COLLECTIVE,
   seatsPerTimeSlot: null,
   seatsShowAttendees: null,
+  seatsShowAvailabilityCount: null,
   id: 0,
   hideCalendarNotes: false,
   recurringEvent: null,
   destinationCalendar: null,
   team: null,
   requiresConfirmation: false,
+  requiresBookerEmailVerification: false,
   bookingLimits: null,
   durationLimits: null,
   hidden: false,
@@ -96,15 +97,7 @@ const commons = {
   users: [user],
   hosts: [],
   metadata: EventTypeMetaDataSchema.parse({}),
-  bookingFields: getBookingFieldsWithSystemFields({
-    bookingFields: [],
-    customInputs: [],
-    // Default value of disableGuests from DB.
-    disableGuests: false,
-    disableBookingTitle: false,
-    metadata: {},
-    workflows: [],
-  }),
+  bookingFields: [],
 };
 
 const dynamicEvent = {

@@ -1,5 +1,7 @@
 import { Prisma } from "@prisma/client";
 
+import { getAppFromSlug } from "@calcom/app-store/utils";
+import { getSlugOrRequestedSlug } from "@calcom/ee/organizations/lib/orgDomains";
 import prisma, { baseEventTypeSelect } from "@calcom/prisma";
 import { SchedulingType } from "@calcom/prisma/enums";
 import { EventTypeMetaDataSchema, teamMetadataSchema } from "@calcom/prisma/zod-utils";
@@ -8,13 +10,40 @@ import { WEBAPP_URL } from "../../../constants";
 
 export type TeamWithMembers = Awaited<ReturnType<typeof getTeamWithMembers>>;
 
-export async function getTeamWithMembers(id?: number, slug?: string, userId?: number) {
+export async function getTeamWithMembers(args: {
+  id?: number;
+  slug?: string;
+  userId?: number;
+  orgSlug?: string | null;
+}) {
+  const { id, slug, userId, orgSlug } = args;
   const userSelect = Prisma.validator<Prisma.UserSelect>()({
     username: true,
     email: true,
     name: true,
     id: true,
     bio: true,
+    destinationCalendar: {
+      select: {
+        externalId: true,
+      },
+    },
+    selectedCalendars: true,
+    credentials: {
+      include: {
+        app: {
+          select: {
+            slug: true,
+            categories: true,
+          },
+        },
+        destinationCalendars: {
+          select: {
+            externalId: true,
+          },
+        },
+      },
+    },
   });
   const teamSelect = Prisma.validator<Prisma.TeamSelect>()({
     id: true,
@@ -92,6 +121,9 @@ export async function getTeamWithMembers(id?: number, slug?: string, userId?: nu
   const where: Prisma.TeamFindFirstArgs["where"] = {};
 
   if (userId) where.members = { some: { userId } };
+  if (orgSlug && orgSlug !== slug) {
+    where.parent = getSlugOrRequestedSlug(orgSlug);
+  }
   if (id) where.id = id;
   if (slug) where.slug = slug;
 
@@ -101,6 +133,9 @@ export async function getTeamWithMembers(id?: number, slug?: string, userId?: nu
   });
 
   if (!team) return null;
+
+  // This should improve performance saving already app data found.
+  const appDataMap = new Map();
   const members = team.members.map((obj) => {
     return {
       ...obj.user,
@@ -108,6 +143,24 @@ export async function getTeamWithMembers(id?: number, slug?: string, userId?: nu
       accepted: obj.accepted,
       disableImpersonation: obj.disableImpersonation,
       avatar: `${WEBAPP_URL}/${obj.user.username}/avatar.png`,
+      connectedApps: obj?.user?.credentials?.map((cred) => {
+        const appSlug = cred.app?.slug;
+        let appData = appDataMap.get(appSlug);
+
+        if (!appData) {
+          appData = getAppFromSlug(appSlug);
+          appDataMap.set(appSlug, appData);
+        }
+
+        const isCalendar = cred?.app?.categories?.includes("calendar") ?? false;
+        const externalId = isCalendar ? cred.destinationCalendars?.[0]?.externalId : null;
+        return {
+          name: appData?.name ?? null,
+          logo: appData?.logo ?? null,
+          app: cred.app,
+          externalId: externalId ?? null,
+        };
+      }),
     };
   });
 

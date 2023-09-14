@@ -8,6 +8,7 @@ import type z from "zod";
 import type { bookingResponse } from "@calcom/features/bookings/lib/getBookingResponsesSchema";
 import type { Calendar } from "@calcom/features/calendars/weeklyview";
 import type { TimeFormat } from "@calcom/lib/timeFormat";
+import type { SchedulingType } from "@calcom/prisma/enums";
 import type { Frequency } from "@calcom/prisma/zod-utils";
 import type { CredentialPayload } from "@calcom/types/Credential";
 
@@ -120,12 +121,9 @@ export interface RecurringEvent {
   tzid?: string | undefined;
 }
 
-export interface IntervalLimit {
-  PER_DAY?: number | undefined;
-  PER_WEEK?: number | undefined;
-  PER_MONTH?: number | undefined;
-  PER_YEAR?: number | undefined;
-}
+export type IntervalLimitUnit = "day" | "week" | "month" | "year";
+
+export type IntervalLimit = Partial<Record<`PER_${Uppercase<IntervalLimitUnit>}`, number | undefined>>;
 
 export type AppsStatus = {
   appName: string;
@@ -163,13 +161,14 @@ export interface CalendarEvent {
     members: TeamMember[];
   };
   location?: string | null;
+  conferenceCredentialId?: number;
   conferenceData?: ConferenceData;
   additionalInformation?: AdditionalInformation;
   uid?: string | null;
   videoCallData?: VideoCallData;
   paymentInfo?: PaymentInfo | null;
   requiresConfirmation?: boolean | null;
-  destinationCalendar?: DestinationCalendar | null;
+  destinationCalendar?: DestinationCalendar[] | null;
   cancellationReason?: string | null;
   rejectionReason?: string | null;
   hideCalendarNotes?: boolean;
@@ -178,8 +177,10 @@ export interface CalendarEvent {
   eventTypeId?: number | null;
   appsStatus?: AppsStatus[];
   seatsShowAttendees?: boolean | null;
+  seatsShowAvailabilityCount?: boolean | null;
   attendeeSeatId?: string;
   seatsPerTimeSlot?: number | null;
+  schedulingType?: SchedulingType | null;
   iCalUID?: string | null;
 
   // It has responses to all the fields(system + user)
@@ -213,12 +214,12 @@ export interface IntegrationCalendar extends Ensure<Partial<SelectedCalendar>, "
   // For displaying the connected email address
   email?: string;
   primaryEmail?: string;
-  credentialId?: number;
+  credentialId?: number | null;
   integrationTitle?: string;
 }
 
 export interface Calendar {
-  createEvent(event: CalendarEvent): Promise<NewCalendarEventType>;
+  createEvent(event: CalendarEvent, credentialId: number): Promise<NewCalendarEventType>;
 
   updateEvent(
     uid: string,

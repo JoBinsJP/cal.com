@@ -2,17 +2,12 @@
 import { FloatingButton } from "./FloatingButton/FloatingButton";
 import { Inline } from "./Inline/inline";
 import { ModalBox } from "./ModalBox/ModalBox";
-import type {
-  InterfaceWithParent,
-  interfaceWithParent,
-  UiConfig,
-  EmbedThemeConfig,
-  BookerLayouts,
-} from "./embed-iframe";
+import type { InterfaceWithParent, interfaceWithParent } from "./embed-iframe";
 import css from "./embed.css";
-import type { EventData, EventDataMap } from "./sdk-action-manager";
 import { SdkActionManager } from "./sdk-action-manager";
+import type { EventData, EventDataMap } from "./sdk-action-manager";
 import allCss from "./tailwind.generated.css?inline";
+import type { UiConfig, EmbedThemeConfig, BookerLayouts } from "./types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Rest<T extends any[]> = T extends [any, ...infer U] ? U : never;
@@ -562,7 +557,6 @@ class CalApi {
 
   modal({
     calLink,
-    calOrigin,
     config = {},
     uid,
   }: {
@@ -598,10 +592,16 @@ class CalApi {
 
     this.cal.modalBox = template.content.children[0];
     this.cal.modalBox.appendChild(iframe);
+
+    this.handleClose();
+    containerEl.appendChild(template.content);
+  }
+
+  private handleClose() {
+    // A request, to close from the iframe, should close the modal
     this.cal.actionManager.on("__closeIframe", () => {
       this.cal.modalBox.setAttribute("state", "closed");
     });
-    containerEl.appendChild(template.content);
   }
 
   on<T extends keyof EventDataMap>({
@@ -749,6 +749,7 @@ document.addEventListener("click", (e) => {
   if (!path) {
     return;
   }
+
   const modalUniqueId = (targetEl.dataset.uniqueId = targetEl.dataset.uniqueId || String(Date.now()));
   const namespace = targetEl.dataset.calNamespace;
   const configString = targetEl.dataset.calConfig || "";
